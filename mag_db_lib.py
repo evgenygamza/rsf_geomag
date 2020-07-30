@@ -132,7 +132,7 @@ def bin2csv(filename, jtc=False, delete=False):
             colheaders = []  # headers of our csv-table
             for row in ffh:
                 if row.find('<') >= 0:
-                    colheaders.append(row.split('<')[1].split('>')[0])
+                    colheaders.append(row.split('<')[1].split('>')[0].upper())
                 else:
                     break
             # end of header reading
@@ -172,7 +172,7 @@ def bin2csv(filename, jtc=False, delete=False):
 
         # 4. finally we make *.csv
         with open(filename + '.csv', 'w') as outfile:
-            df.to_csv(outfile, sep=',')
+            df.to_csv(outfile, sep=',', line_terminator="\n")
 
     # 5. P.S. optional delete ff
     if delete and os.path.isfile(filename + '.ffh'):

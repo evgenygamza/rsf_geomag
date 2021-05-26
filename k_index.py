@@ -6,8 +6,11 @@ import datetime
 # df = pd.read_csv('MOS_20190401-04.csv', parse_dates=[0], index_col='dt',
 df0 = pd.read_csv('MOS_20190400_60pp.csv', parse_dates=[0], index_col='dt',
                   dtype=float, decimal='.')
+
+# last_day = df0.last('1s').index
+
 for day in range(20):
-    df = df0['2019-04-{:02d} 00:00:29'.format(1+day): '2019-04-{:02d} 00:00:29'.format(5+day)]
+    df = df0['2019-04-{:02d} 00:00:29'.format(1+day): '2019-04-{:02d} 01:00:29'.format(5+day)]
     print(df.head(10))
 
     time = kic.Time2Float(pd.to_datetime(df.index.to_numpy()))

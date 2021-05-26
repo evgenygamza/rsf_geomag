@@ -15,9 +15,13 @@ __email__ = 'evgeny.gamza@gmail.com'
 
 import os
 import julian
-from datetime import datetime
 import numpy as np
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import datetime as dt
+import matplotlib.dates as md
+from datetime import datetime
 from ftplib import FTP
 from sqlalchemy import create_engine
 
@@ -207,24 +211,43 @@ def csv2sql(filename, sql_params, delete=False):
     # taking csv & create df  # todo X, Y, Z variations
     # df = pd.read_csv(filename + '.csv', skiprows=1, names=['dt', 'H', 'E', 'Z', 'temp'])
     df = pd.read_csv(filename + '.csv')
-    df.rename(columns={filename[:4]+'T': 'temp', filename[:4]+'t': 'temp'}, inplace=True)
+    df.rename(columns={filename[:4] + 'T': 'temp', filename[:4] + 't': 'temp'}, inplace=True)
     df.rename(columns=lambda x: x.replace(filename[:4], ''), inplace=True)
     print(df.head(5))
 
     # connecting to DB
     # engine = create_engine('mysql+pymysql://gamza:*****@crsa.izmiran.ru/rsf_mag', echo=True)
+
+    """
+    CREATE TABLE `rsf_mag`.`newone` (
+`dt` DATETIME NOT NULL ,
+`H` FLOAT DEFAULT NULL COMMENT 'nT',
+`E` FLOAT DEFAULT NULL COMMENT 'nT',
+`Z` FLOAT DEFAULT NULL COMMENT 'nT',
+PRIMARY KEY ( `dt` )
+) ENGINE = INNODB DEFAULT CHARSET = utf8mb4;"""
+
     try:
         engine = create_engine('{}+{}://{}:{}@{}/{}'.
                                format(db_type, driver, user, passwd, host, database), echo=False)
     except:
         with open('faillog.txt', 'a') as logfile:  # fail logging
             logfile.write('{:<30}|{:^25}|{:>35}  |  {}\n'.
-                          format(filename + '.csv', host, 'sql insertion failure at:', datetime.now()))
+                          format(filename + '.csv', host, 'sql connection failure at:', datetime.now()))
             return
+
+    # meta = MetaData()
+    # newone = Table(
+    #     'filename[:3]', meta,
+    #     Column('dt', DateTime, primary_key=True),
+    #     Column(df[0], Float),
+    #     Column(df[1], Float),
+    #     Column(df[2], Float))
+    # meta.create_all(engine)
 
     # inserting df into database
     try:
-        df.to_sql(filename[:3], index=False, con=engine, if_exists='append')
+        df.iloc[:, 0:4].to_sql(filename[:3], index=False, con=engine, if_exists='append')
     except:
         with open('faillog.txt', 'a') as logfile:  # fail logging
             logfile.write('{:<30}|{:^25}|{:>35}  |  {}\n'.
@@ -245,5 +268,49 @@ def bin2sql(filename):  # todo
     pass
 
 
-def plotter(some, variables):  # todo
-    pass
+def timeline_plotter(sql_params, stn, start, end, shift_step=30):  # todo csv, sql or ffd
+    """
+
+    :param stn:
+    :param sql_params:
+    :param start:
+    :param end:
+    :param shift_step: difference between colors for multiple magnetograms
+    :return:
+    """
+    host = sql_params.get('host', '')  # 'crsa.izmiran.ru'
+    user = sql_params.get('user', '')  # 'gamza'
+    passwd = sql_params.get('passwd', '')  # '*****'
+    database = sql_params.get('database', '')  # 'rsf_mag'
+    db_type = sql_params.get('db_type', '')  # 'mysql'
+    driver = sql_params.get('driver', '')  # 'pymysql'
+
+    engine = create_engine('{}+{}://{}:{}@{}/{}'.
+                           format(db_type, driver, user, passwd, host, database), echo=False)
+
+    # df = pd.read_sql("SELECT * FROM `MOS` WHERE `dt` > '2019-12-30 23:59:59' AND `dt` < '2020-01-01 00:00:29'", engine,
+    df = pd.read_sql("SELECT * FROM {} WHERE `dt` > '{}' AND `dt` < '{}'".format(stn, start, end),
+                     engine, parse_dates=True, index_col='dt')
+
+
+    # Set up the matplotlib figure
+    f, axes = plt.subplots(3, 1, figsize=(13, 6), sharex=True)
+    sns.despine(left=True)
+    # sns.set_style("ticks", {"xtick.major.size": 1, "ytick.major.size": 88})  # fixme why it doesn't work, suka?
+
+    # sns.lineplot(data=df_north, palette="Reds_r", dashes=False, linewidth=1.2, ax=axes[0]).legend(loc=3)
+    # sns.lineplot(data=df_east, palette="BuGn_r", dashes=False, linewidth=1.2, ax=axes[1]).legend(loc=6)
+    # sns.lineplot(data=df_down, palette="Blues_r", dashes=False, linewidth=1.2, ax=axes[2]).legend(loc=2)
+    # todo make this shit less shitable
+    # a = sns.lineplot(data=df['H'], palette="Reds_r", dashes=False, linewidth=1.2, ax=axes[0])
+    a = sns.lineplot(data=df.filter(regex=r'[HXhx]'), palette="Reds_r", dashes=False, linewidth=1.2, ax=axes[0])
+    b = sns.lineplot(data=df.filter(regex=r'[EYey]'), palette="BuGn_r", dashes=True, linewidth=1.2, ax=axes[1])
+    c = sns.lineplot(data=df.filter(regex=r'[Zz]'), palette="Blues_r", dashes=False, linewidth=1.2, ax=axes[2])
+    # a.legend(loc=3)
+    # b.legend(loc=6)
+    # c.legend(loc=2)
+    a.xaxis.set_major_formatter(md.DateFormatter('%H:%M'))
+    b.xaxis.set_major_formatter(md.DateFormatter('%H:%M'))
+    c.xaxis.set_major_formatter(md.DateFormatter('%H:%M'))
+
+    plt.show()

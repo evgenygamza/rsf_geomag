@@ -1,0 +1,20 @@
+FLAT FILE VERSION=3.0
+DATE FILES CREATED=2014-10-01 00:12:01
+RECORD LENGTH, BYTES= 20
+NUMBER OF DATA COLUMNS=  3
+NUMBER OF ROWS= 44640
+FLAG FOR MISSING DATA= -1.00E+32
+TIME RESOLUTION, SEC= 60.0000
+ENDIAN=LITTLE
+------------------------------------------------------------------------------
+NNN <name>     <units>    <description>                   <type><offset>
+000 <Time>     <Days>     <Modify Julian Day=JD-2400000.5>  <T> <0000>
+001 <MOS_H>     <nT>      <Moscow>                           <R> <0008>
+002 <MOS_E>     <nT>      <Moscow>                           <R> <0012>
+003 <MOS_Z>     <nT>      <Moscow>                           <R> <0016>
+
+NOTES:
+Start time=2014-10-01 00:00:30.00
+End   time=2014-10-31 23:59:30.00
+Moscow observatory preliminary 1 min data
+END

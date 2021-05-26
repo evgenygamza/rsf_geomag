@@ -4,4 +4,5 @@
 /MOS_20180400_60pp.ffd
 /MOS_20190400_60pp.csv
 /MOS_20190401-04.csv
-/[A-Z][A-Z][A-Z]_*
+/[A-Z]{3}_*
+/godograph/
